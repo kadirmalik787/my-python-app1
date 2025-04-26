@@ -38,7 +38,7 @@ pipeline {
                 git config user.name "Jenkins"
                 git add k8s/deployment.yaml
                 git commit -m "Update image to version ${env.BUILD_ID}"
-                git push https://${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}@github.com/kadirmalik787/my-python-app.git
+                git push https://${GITHUB_TOKEN}@github.com/kadirmalik787/my-python-app1.git
                 """
             }
         }
