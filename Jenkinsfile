@@ -1,8 +1,8 @@
 pipeline {
     agent any
 
-    environment {
-        DOCKER_HUB_CREDS = credentials('docker-hub-creds')  // Jenkins credentials ID
+    environment {  // spelling fix kiya hai!
+        DOCKER_HUB_CREDS = credentials('docker-hub-creds')
         IMAGE_NAME = "kadirmalik457/my-web-app"
     }
 
@@ -31,7 +31,6 @@ pipeline {
                 sh 'docker push $IMAGE_NAME'
             }
         }
-
     }
 
     post {
@@ -41,4 +40,5 @@ pipeline {
         }
     }
 }
+
 
