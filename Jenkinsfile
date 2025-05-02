@@ -1,13 +1,11 @@
 pipeline {
     agent any
 
-    environment {  // spelling fix kiya hai!
-        DOCKER_HUB_CREDS = credentials('docker-hub-creds')
+    environment {
         IMAGE_NAME = "kadirmalik457/my-web-app"
     }
 
     stages {
-
         stage('Clone Repository') {
             steps {
                 git 'https://github.com/kadirmalik787/my-python-app1.git'
@@ -22,7 +20,9 @@ pipeline {
 
         stage('Docker Login') {
             steps {
-                sh "echo ${DOCKER_HUB_CREDS_PSW} | docker login -u ${DOCKER_HUB_CREDS_USR} --password-stdin"
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
+                }
             }
         }
 
