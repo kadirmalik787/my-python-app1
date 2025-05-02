@@ -1,81 +1,41 @@
 pipeline {
     agent any
-    
+
     environment {
-        DOCKER_CREDS = credentials('docker-hub-creds')
-        GITHUB_CREDS = credentials('github-token')
-        IMAGE_NAME = "${env.DOCKER_CREDS_USR}/my-python-app"
+        DOCKER_HUB_CREDS = credentials('docker-hub-creds')
+        IMAGE_NAME = "kadirmalik457/my-web-app"
     }
-    
+
     stages {
-        stage('Checkout Code') {
+        stage('Clone Repository') {
             steps {
-                checkout scm
-                script {
-                    env.GIT_SHORT_HASH = sh(
-                        script: 'git rev-parse --short HEAD',
-                        returnStdout: true
-                    ).trim()
-                    env.IMAGE_TAG = "${env.BUILD_ID}-${env.GIT_SHORT_HASH}"
-                }
+                git 'https://github.com/kadirmalik787/my-python-app1.git'
             }
         }
-        
+
         stage('Build Docker Image') {
             steps {
-                script {
-                    docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
-                }
+                sh 'docker build -t $IMAGE_NAME .'
             }
         }
-        
-        stage('Push to Docker Hub') {
+
+        stage('Docker Login') {
             steps {
-                script {
-                    retry(3) {
-                        docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-creds') {
-                            timeout(time: 5, unit: 'MINUTES') {
-                                docker.image("${IMAGE_NAME}:${IMAGE_TAG}").push()
-                            }
-                        }
-                    }
-                }
+                sh "echo $DOCKER_HUB_CREDS_PSW | docker login -u $DOCKER_HUB_CREDS_USR --password-stdin"
             }
         }
-        
-        stage('Update Kubernetes Manifest') {
+
+        stage('Docker Push') {
             steps {
-                script {
-                    sh """
-                    sed -i 's|image:.*|image: ${IMAGE_NAME}:${IMAGE_TAG}|g' k8s/deployment.yaml
-                    git config user.email "jenkins@example.com"
-                    git config user.name "Jenkins"
-                    git add k8s/deployment.yaml
-                    git commit -m "CI: Update image to ${IMAGE_TAG}"
-                    git push https://${GITHUB_CREDS}@github.com/kadirmalik787/my-python-app1.git HEAD:main
-                    """
-                }
-            }
-        }
-        
-        stage('Deploy to Kubernetes') {
-            steps {
-                script {
-                    sh "kubectl apply -f k8s/deployment.yaml"
-                    sh "kubectl apply -f k8s/service.yaml"
-                }
+                sh 'docker push $IMAGE_NAME'
             }
         }
     }
-    
+
     post {
-        failure {
-            echo "Pipeline failed - please check logs"
-            // Add notification here if needed
-        }
-        success {
-            echo "Pipeline succeeded!"
-            echo "Deployed image: ${IMAGE_NAME}:${IMAGE_TAG}"
+        always {
+            echo 'Cleaning up...'
+            sh 'docker logout'
         }
     }
 }
