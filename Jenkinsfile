@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_HUB = credentials('docker-hub-creds')
-        IMAGE_NAME = "kadirmalik457/my-web-app"
+        IMAGE_NAME = "kadirmalik457/my-python-app1"
     }
 
     stages {
