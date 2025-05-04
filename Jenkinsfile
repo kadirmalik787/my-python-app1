@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB = credentials('docker-hub-creds')
         IMAGE_NAME = "kadirmalik457/my-python-app1:latest"
     }
 
@@ -22,18 +21,15 @@ pipeline {
             }
         }
 
-        stage('Docker Login') {
+        stage('Docker Login & Push') {
             steps {
                 script {
-                    sh "echo $DOCKER_HUB_PSW | docker login -u $DOCKER_HUB_USR --password-stdin"
-                }
-            }
-        }
-
-        stage('Push to Docker Hub') {
-            steps {
-                script {
-                    sh 'docker push $IMAGE_NAME'
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'DOCKER_HUB_USR', passwordVariable: 'DOCKER_HUB_PSW')]) {
+                        sh """
+                            echo $DOCKER_HUB_PSW | docker login -u $DOCKER_HUB_USR --password-stdin
+                            docker push $IMAGE_NAME
+                        """
+                    }
                 }
             }
         }
@@ -42,7 +38,7 @@ pipeline {
     post {
         always {
             echo 'Cleaning up...'
-            sh 'docker logout'
+            sh 'docker logout || true'
         }
     }
 }
